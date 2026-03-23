@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.authorUid;
+    }
+
+    function uidUnchanged() {
+      return !('authorUid' in request.resource.data) ||
+        request.resource.data.authorUid == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('authorUid' in request.resource.data) ||
+        request.resource.data.authorUid == resource.data.authorUid;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "Emmanualpraveen@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isPublic() {
+      return resource.data.isPublic == true;
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+        data.uid is string && data.uid.size() < 128 &&
+        data.email is string && data.email.size() < 256;
+    }
+
+    function isValidDataset(data) {
+      return data.keys().hasAll(['id', 'name', 'rows', 'authorUid']) &&
+        data.id is string && data.id.size() < 128 &&
+        data.name is string && data.name.size() < 256 &&
+        data.rows is list && data.rows.size() < 10000 &&
+        data.authorUid is string && data.authorUid.size() < 128;
+    }
+
+    function isValidDashboard(data) {
+      return data.keys().hasAll(['id', 'name', 'authorUid']) &&
+        data.id is string && data.id.size() < 128 &&
+        data.name is string && data.name.size() < 256 &&
+        data.authorUid is string && data.authorUid.size() < 128;
+    }
+
+    function isValidReport(data) {
+      return data.keys().hasAll(['id', 'title', 'content', 'datasetId', 'authorUid']) &&
+        data.id is string && data.id.size() < 128 &&
+        data.title is string && data.title.size() < 256 &&
+        data.content is string && data.content.size() < 100000 &&
+        data.datasetId is string && data.datasetId.size() < 128 &&
+        data.authorUid is string && data.authorUid.size() < 128;
+    }
+
+    // ===============================================================
+    // Match Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+    }
+
+    match /datasets/{datasetId} {
+      allow read: if isDocOwner() || isAdmin() || isPublic();
+      allow create: if isAuthenticated() && uidUnchanged() && isValidDataset(request.resource.data);
+      allow update: if isDocOwner() && uidNotModified() && isValidDataset(request.resource.data);
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /dashboards/{dashboardId} {
+      allow read: if isDocOwner() || isAdmin() || isPublic();
+      allow create: if isAuthenticated() && uidUnchanged() && isValidDashboard(request.resource.data);
+      allow update: if isDocOwner() && uidNotModified() && isValidDashboard(request.resource.data);
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /reports/{reportId} {
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && uidUnchanged() && isValidReport(request.resource.data);
+      allow update: if isDocOwner() && uidNotModified() && isValidReport(request.resource.data);
+      allow delete: if isDocOwner() || isAdmin();
+    }
+  }
+}

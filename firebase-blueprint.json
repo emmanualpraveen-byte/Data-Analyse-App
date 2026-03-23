@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user ID" },
+        "email": { "type": "string", "format": "email", "description": "User email address" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "photoURL": { "type": "string", "description": "User profile photo URL" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the user account was created" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Dataset": {
+      "title": "Dataset",
+      "description": "A dataset uploaded by a user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "columns": { "type": "array", "items": { "type": "object" } },
+        "rows": { "type": "array", "items": { "type": "object" } },
+        "rowCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "authorUid": { "type": "string" }
+      },
+      "required": ["id", "name", "rows", "authorUid"]
+    },
+    "Dashboard": {
+      "title": "Dashboard",
+      "description": "A dashboard containing widgets",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "widgets": { "type": "array", "items": { "type": "object" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "authorUid": { "type": "string" }
+      },
+      "required": ["id", "name", "authorUid"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "An AI-generated report",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "datasetId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "authorUid": { "type": "string" }
+      },
+      "required": ["id", "title", "content", "datasetId", "authorUid"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/datasets/{datasetId}": {
+      "schema": "Dataset",
+      "description": "User datasets"
+    },
+    "/dashboards/{dashboardId}": {
+      "schema": "Dashboard",
+      "description": "User dashboards"
+    },
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "AI-generated reports"
+    }
+  }
+}
