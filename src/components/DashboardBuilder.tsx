@@ -40,6 +40,10 @@ import {
   LineChart as LineChartIcon,
   PieChart as PieChartIcon,
   Table as TableIcon,
+  AreaChart as AreaChartIcon,
+  ScatterChart as ScatterChartIcon,
+  Radar,
+  Hash,
   CreditCard,
   Maximize2,
   Download,
@@ -522,9 +526,13 @@ export const DashboardBuilder: React.FC = () => {
                     {[
                       { type: WidgetType.BAR_CHART, icon: BarChart3, label: "Bar Chart" },
                       { type: WidgetType.LINE_CHART, icon: LineChartIcon, label: "Line Chart" },
+                      { type: WidgetType.AREA_CHART, icon: AreaChartIcon, label: "Area Chart" },
                       { type: WidgetType.PIE_CHART, icon: PieChartIcon, label: "Pie Chart" },
+                      { type: WidgetType.SCATTER_PLOT, icon: ScatterChartIcon, label: "Scatter Plot" },
+                      { type: WidgetType.RADAR_CHART, icon: Radar, label: "Radar Chart" },
+                      { type: WidgetType.FUNNEL_CHART, icon: Filter, label: "Funnel Chart" },
                       { type: WidgetType.TABLE, icon: TableIcon, label: "Data Table" },
-                      { type: WidgetType.KPI_CARD, icon: CreditCard, label: "KPI Card" },
+                      { type: WidgetType.KPI_CARD, icon: Hash, label: "KPI Card" },
                     ].map((item) => (
                       <button
                         key={item.type}
@@ -813,8 +821,55 @@ const WidgetSettings: React.FC<{
                             >
                               <option value={WidgetType.BAR_CHART}>Bar Chart</option>
                               <option value={WidgetType.LINE_CHART}>Line Chart</option>
+                              <option value={WidgetType.AREA_CHART}>Area Chart</option>
                               <option value={WidgetType.PIE_CHART}>Pie Chart</option>
+                              <option value={WidgetType.SCATTER_PLOT}>Scatter Plot</option>
+                              <option value={WidgetType.RADAR_CHART}>Radar Chart</option>
+                              <option value={WidgetType.FUNNEL_CHART}>Funnel Chart</option>
                             </select>
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase w-8">Color:</span>
+                            <input
+                              type="color"
+                              value={config?.color || COLORS[widget.yAxis?.indexOf(col.name) || 0 % COLORS.length]}
+                              onChange={(e) => {
+                                const currentConfigs = widget.yAxisConfigs || [];
+                                let nextConfigs;
+                                if (currentConfigs.find(c => c.column === col.name)) {
+                                  nextConfigs = currentConfigs.map(c => 
+                                    c.column === col.name ? { ...c, color: e.target.value } : c
+                                  );
+                                } else {
+                                  nextConfigs = [...currentConfigs, { column: col.name, aggregation: "sum", color: e.target.value }];
+                                }
+                                onUpdate({ yAxisConfigs: nextConfigs });
+                              }}
+                              className="h-6 w-full p-0 border-none bg-transparent cursor-pointer"
+                            />
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase w-8">Label:</span>
+                            <input
+                              type="text"
+                              value={config?.label || ""}
+                              onChange={(e) => {
+                                const currentConfigs = widget.yAxisConfigs || [];
+                                let nextConfigs;
+                                if (currentConfigs.find(c => c.column === col.name)) {
+                                  nextConfigs = currentConfigs.map(c => 
+                                    c.column === col.name ? { ...c, label: e.target.value } : c
+                                  );
+                                } else {
+                                  nextConfigs = [...currentConfigs, { column: col.name, aggregation: "sum", label: e.target.value }];
+                                }
+                                onUpdate({ yAxisConfigs: nextConfigs });
+                              }}
+                              placeholder="Display Name"
+                              className="flex-1 p-1 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none focus:ring-1 focus:ring-indigo-500"
+                            />
                           </div>
                         </div>
                       )}
@@ -858,6 +913,155 @@ const WidgetSettings: React.FC<{
               <option value="max">Maximum</option>
             </select>
             <p className="text-[10px] text-slate-400 italic">Used for columns without a specific aggregation setting.</p>
+          </div>
+
+          <div className="space-y-4 pt-4 border-t border-slate-100">
+            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Display Options</h4>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-600">Show Chart Title</span>
+              <input
+                type="checkbox"
+                checked={widget.showTitle !== false}
+                onChange={(e) => onUpdate({ showTitle: e.target.checked })}
+                className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+              />
+            </div>
+
+            {(widget.type === WidgetType.BAR_CHART || widget.type === WidgetType.LINE_CHART || widget.type === WidgetType.AREA_CHART || widget.type === WidgetType.COMBO_CHART || widget.type === WidgetType.SCATTER_PLOT) && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">X-Axis Label</label>
+                    <input
+                      type="text"
+                      value={widget.xAxisLabel || ""}
+                      onChange={(e) => onUpdate({ xAxisLabel: e.target.value })}
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Y-Axis Label</label>
+                    <input
+                      type="text"
+                      value={widget.yAxisLabel || ""}
+                      onChange={(e) => onUpdate({ yAxisLabel: e.target.value })}
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-600">Show X-Axis</span>
+                  <input
+                    type="checkbox"
+                    checked={widget.showXAxis !== false}
+                    onChange={(e) => onUpdate({ showXAxis: e.target.checked })}
+                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-600">Show Y-Axis</span>
+                  <input
+                    type="checkbox"
+                    checked={widget.showYAxis !== false}
+                    onChange={(e) => onUpdate({ showYAxis: e.target.checked })}
+                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-600">Show Data Labels</span>
+                  <input
+                    type="checkbox"
+                    checked={widget.showDataLabels || false}
+                    onChange={(e) => onUpdate({ showDataLabels: e.target.checked })}
+                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                  />
+                </div>
+
+                {widget.showDataLabels && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Label Position</span>
+                    <select
+                      value={widget.dataLabelPosition || "top"}
+                      onChange={(e) => onUpdate({ dataLabelPosition: e.target.value as any })}
+                      className="p-1 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none focus:ring-1 focus:ring-indigo-500"
+                    >
+                      <option value="top">Top</option>
+                      <option value="bottom">Bottom</option>
+                      <option value="center">Center</option>
+                      <option value="insideEnd">Inside End</option>
+                      <option value="outsideEnd">Outside End</option>
+                    </select>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-600">Show Grid Lines</span>
+                  <input
+                    type="checkbox"
+                    checked={widget.showGrid !== false}
+                    onChange={(e) => onUpdate({ showGrid: e.target.checked })}
+                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                  />
+                </div>
+              </>
+            )}
+
+            {widget.type === WidgetType.KPI_CARD && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Prefix</label>
+                  <input
+                    type="text"
+                    value={widget.kpiPrefix || ""}
+                    onChange={(e) => onUpdate({ kpiPrefix: e.target.value })}
+                    placeholder="$"
+                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Suffix</label>
+                  <input
+                    type="text"
+                    value={widget.kpiSuffix || ""}
+                    onChange={(e) => onUpdate({ kpiSuffix: e.target.value })}
+                    placeholder="%"
+                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-slate-600">Show Legend</span>
+                <input
+                  type="checkbox"
+                  checked={widget.showLegend !== false}
+                  onChange={(e) => onUpdate({ showLegend: e.target.checked })}
+                  className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                />
+              </div>
+              
+              {widget.showLegend !== false && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Position</span>
+                  <select
+                    value={widget.legendPosition || "top"}
+                    onChange={(e) => onUpdate({ legendPosition: e.target.value as any })}
+                    className="p-1 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none focus:ring-1 focus:ring-indigo-500"
+                  >
+                    <option value="top">Top</option>
+                    <option value="bottom">Bottom</option>
+                    <option value="left">Left</option>
+                    <option value="right">Right</option>
+                  </select>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-4 pt-4 border-t border-slate-100">

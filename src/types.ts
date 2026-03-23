@@ -49,21 +49,44 @@ export enum WidgetType {
   TABLE = "table",
   KPI_CARD = "kpi_card",
   HEATMAP = "heatmap",
+  AREA_CHART = "area_chart",
+  SCATTER_PLOT = "scatter_plot",
+  RADAR_CHART = "radar_chart",
+  FUNNEL_CHART = "funnel_chart",
+  COMBO_CHART = "combo_chart",
 }
 
 export interface WidgetConfig {
   id: string;
   type: WidgetType;
   title: string;
+  showTitle?: boolean;
   datasetId: string;
   xAxis?: string[];
   yAxis?: string[];
-  yAxisConfigs?: { column: string; aggregation: "sum" | "avg" | "count" | "min" | "max"; type?: WidgetType }[];
+  yAxisConfigs?: { 
+    column: string; 
+    aggregation: "sum" | "avg" | "count" | "min" | "max"; 
+    type?: WidgetType;
+    color?: string;
+    label?: string;
+  }[];
   groupBy?: string;
   aggregation?: "sum" | "avg" | "count" | "min" | "max";
   filterLogic?: "and" | "or";
   filters?: { column: string; operator: string; value: string }[];
   calculatedColumns?: { name: string; formula: string }[];
+  showLegend?: boolean;
+  legendPosition?: "top" | "bottom" | "left" | "right";
+  showGrid?: boolean;
+  showXAxis?: boolean;
+  showYAxis?: boolean;
+  xAxisLabel?: string;
+  yAxisLabel?: string;
+  showDataLabels?: boolean;
+  dataLabelPosition?: "top" | "bottom" | "center" | "insideEnd" | "outsideEnd";
+  kpiPrefix?: string;
+  kpiSuffix?: string;
   layout: {
     x: number;
     y: number;
